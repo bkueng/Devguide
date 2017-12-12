@@ -1,9 +1,32 @@
-# uORB Graph
+# uORB Publication/Subscription Graph
 
-TODO: document the graph...
+This page provides a uORB publication/subscription graph that
+shows the communication between modules. It is based on information that is
+extracted directly from the source code.
+
+The graph has the following properties:
+
+- Modules are shown in gray with rounded corners
+- Each topic has its own color
+- There's a line between a topic and a module if that module subscribes
+  to the topic. A dashed line means the module publishes a certain topic.
+- The following topics are always excluded: `parameter_update`, `mavlink_log`
+  and `log_message` (they are subscribed/published by many modules). The set of
+  logged topics and topics that have no subscriber or no publisher are excluded
+  as well.
+- Modules in `src/examples` are always excluded
+- Hovering over a module/topic shows its connections: for a module, it's
+  all the subscribed and published topics. And for a topic, it's all modules
+  that either subscribe or publish that topic.
+- Double-clicking on a topic will open its message definition.
+- Make sure your browser window is wide enough to display the full graph (the
+  sidebar menu can be hidden with the icon in the top-left corner)
+- There are different presets, which define the list of modules that are shown
+
+
 
 Search: <input id="search" type="text" >
-Preset: <select id ="select-graph" name="select-graph" onchange="reloadSimulation(this.value);">
+Preset: <select id ="select-graph" name="select-graph">
     <option value='graph_px4fmu-v4.json'>FMUv4 Modules</option>
     <option value='graph_px4fmu-v2.json'>FMUv2 Modules</option>
     <option value='graph_sitl.json'>SITL Modules</option>
@@ -19,6 +42,16 @@ Preset: <select id ="select-graph" name="select-graph" onchange="reloadSimulatio
 <div style="height: 1210px;"></div>
 
 <script>
+
+// the d3.js script might not yet be loaded (because it's not in <head>), so we
+// wrap everything in a function and retry until d3 is available
+function initializeGraph() {
+    if (typeof d3 === 'undefined') {
+        // try again later
+        setTimeout(initializeGraph, 500);
+        return;
+    }
+
 
 var graph_option = document.getElementById("select-graph");
 var default_json_file = graph_option.value;
@@ -57,6 +90,7 @@ function searchTextChanged() {
 document.getElementById("search").addEventListener("keyup", searchTextChanged);
 document.getElementById("search").addEventListener("focusout", searchTextChanged);
 document.getElementById("search").addEventListener("focusin", searchTextChanged);
+document.getElementById("select-graph").addEventListener("change", reloadSimulation);
 
 
 
@@ -335,7 +369,8 @@ function dragended(d) {
     });
 }
 
-function reloadSimulation(json_file_name) {
+function reloadSimulation(e) {
+    json_file_name = e.target.value;
     console.log(json_file_name);
     d3.selectAll("svg > *").remove();
     loadSimulation(json_file_name);
@@ -499,6 +534,10 @@ function boundedBox() {
 function constant(_) {
     return function () { return _; }
 }
+
+} // initializeGraph()
+
+initializeGraph();
 
 </script>
 
